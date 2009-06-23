@@ -59,7 +59,10 @@ if [ ! -d "$REPO/.hg" ]; then
   exit 1
 fi
 
-printf "Pulling latest code..."
+printf "Compacting self-extraction script..."
+sed -f compact-shellscript.sed self-extract-src.sh > self-extract.sh || fail "Failed to generate compacted self-extract script"
+
+printf "\nPulling latest code..."
 hg -R $REPO archive -r $REVISION -t tgz enano-$VERSION.tar.gz || fail "Could not pull revision $REVISION from Mercurial repo"
 printf "\nExtracting..."
 tar xzCf `dirname $0`/stage enano-$VERSION.tar.gz || fail "Could not extract tarball"
