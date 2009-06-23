@@ -54,7 +54,7 @@ if [ ! -d "$REPO/.hg" ]; then
   echo "ERROR: Could not find the Enano Mercurial repository at $REPO."
   echo "Perhaps you need to obtain a copy?"
   echo "  $ hg clone http://hg.enanocms.org/repos/enano-1.1 ./enano-hg"
-  echo "If you already have a copy somewhere else, make a symlink:"
+  echo "If you have a copy somewhere else, make a symlink:"
   echo "  $ ln -s /path/to/enano/hg ./enano-hg"
   exit 1
 fi
@@ -77,4 +77,3 @@ cat self-extract.sh enano-$VERSION-selfextract.tar.bz2 > enano-$VERSION-bitnami-
 chmod +x enano-$VERSION-bitnami-module.sh
 rm -f enano-$VERSION-selfextract.tar.bz2
 echo -e "\nDone! Output written to enano-$VERSION-bitnami-module.sh"
-
