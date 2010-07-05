@@ -61,7 +61,7 @@ bitnami_user="bn_enanocms"
 bitnami_pass=`dd if=/dev/urandom bs=256 count=1 2>/dev/null | tr -cd '\41-\46\50-\176' | cut -c 1-12`
 
 query='CREATE DATABASE IF NOT EXISTS `'$bitnami_db'`; GRANT ALL PRIVILEGES ON '$bitnami_db'.* TO '"$bitnami_user"'@localhost IDENTIFIED BY '"'$bitnami_pass'"'; FLUSH PRIVILEGES;'
-echo $query | $mysql -u root --password="$mysqlpass" || exit 1
+echo "$query" | $mysql -u root --password="$mysqlpass" || exit 1
 
 echo "Installing files."
 mkdir -p $bitnami/apps/enanocms/{conf,licenses} || exit 1
@@ -77,6 +77,7 @@ Alias /enanocms "$bitnami/apps/enanocms/htdocs"
     Allow from all
 </Directory>
 EOF
+cp ./uninstall.sh $bitnami/apps/enanocms/
 
 echo "Patching Apache configuration."
 if test x$(cat $bitnami/apache2/conf/httpd.conf | grep '^Include' | grep enanocms | wc -l) = x0; then
@@ -122,4 +123,16 @@ done
 
 echo "Restarting Apache."
 $bitnami/ctlscript.sh restart apache
+
+echo
+echo -e "Installation finished, \e[31;1mbut be warned! We are aware of a bug with BitNami's"
+echo -e "copy of GMP.\e[0m If your server doesn't support SSE2, Enano logins may fail. A"
+echo -e "symptom of this problem is messages similar to the following in your Apache"
+echo -e "error log and a blank response when you try to log in to your Enano website:"
+echo
+echo -e "\t[Mon Jul 05 14:22:10 2010] [notice] child pid 26544 exit signal"
+echo -e "\tIllegal instruction (4)"
+echo
+echo -e "If you experience this bug, please report it to BitNami, not the Enano project."
+echo
 

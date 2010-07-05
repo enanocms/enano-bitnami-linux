@@ -69,7 +69,7 @@ tar xzCf `dirname $0`/stage enano-$VERSION.tar.gz || fail "Could not extract tar
 rm -f enano-$VERSION.tar.gz
 printf "\nCreating payload..."
 cd stage
-tar cjf ../enano-$VERSION-selfextract.tar.bz2 autorun.sh COPYING enano-$VERSION || fail "Could not create staging tarball"
+tar cjf ../enano-$VERSION-selfextract.tar.bz2 * || fail "Could not create staging tarball"
 rm -rf enano-$VERSION
 cd ..
 printf "\nWriting output..."
