@@ -10,6 +10,12 @@ if test -z "$BASH"; then
   exit 1
 fi
 
+# OS X sed (at least leopard and up) seem to support -E
+sedflags=Ee
+if ( sed --version 2>&1 | grep 'GNU sed' 2>&1 ) > /dev/null ; then
+	sedflags=re
+fi
+
 my_which_real()
 {
   test -n "$1" || return 1
@@ -73,13 +79,28 @@ getdata()
 }
 
 # Go through each required command, and make sure it's on the system. If not, fail.
-for cmd in bzip2 tar grep tail cat wc dd md5sum; do
+for cmd in bzip2 tar grep tail cat wc dd; do
   my_which $cmd>/dev/null || exit 1
   eval $cmd=`my_which $cmd`
   if test x$? = x1; then
     exit 1
   fi
 done
+
+# special case for md5sum
+if my_which_real md5sum 2>&1 > /dev/null; then
+	md5sum=`my_which_real md5sum`
+elif my_which_real openssl 2>&1 > /dev/null; then
+	md5sum=md5sum
+	md5sum()
+	{
+		local f=${1:--}
+		cat $f | openssl dgst -md5 | sed -$sedflags 's/^\(stdin\)= //'
+	}
+else
+	echo "Could not find md5sum or openssl"
+	exit 1
+fi
 
 tempdir=""
 extractonly=0
@@ -90,7 +111,7 @@ while test -n "$1"; do
       if test -n "$2"; then
         tempdir=$2
       else
-        tempdir=`echo $0 | sed -re 's/\.[a-z0-9_-]{1,5}$//'`
+        tempdir=`echo $0 | sed -$sedflags 's/\.[a-z0-9_-]{1,5}$//'`
       fi
       ;;
   esac

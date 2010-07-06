@@ -16,6 +16,14 @@ check_bitnami_dir()
   return 0
 }
 
+## COMPAT
+
+# OS X sed (at least leopard and up) seem to support -E
+sedflags=Ee
+if ( sed --version 2>&1 | grep 'GNU sed' 2>&1 ) > /dev/null ; then
+	sedflags=re
+fi
+
 ## SCRIPT
 
 cd `dirname $0`
@@ -44,7 +52,7 @@ if [ -d $bitnami/apps/enanocms ]; then
   exit 1
 fi
 
-mysql_port=$(cat $bitnami/properties.ini | grep mysql_port | sed -re 's/^mysql_port=//g')
+mysql_port=$(cat $bitnami/properties.ini | grep mysql_port | sed -$sedflags 's/^mysql_port=//g')
 
 while true; do
   read -s -p "MySQL root password: " mysqlpass
@@ -80,14 +88,14 @@ EOF
 cp ./uninstall.sh $bitnami/apps/enanocms/
 
 echo "Patching Apache configuration."
-if test x$(cat $bitnami/apache2/conf/httpd.conf | grep '^Include' | grep enanocms | wc -l) = x0; then
+if test "`cat $bitnami/apache2/conf/httpd.conf | grep '^Include' | grep enanocms | wc -l`" -eq 0; then
   echo -ne "\nInclude "'"'"$bitnami/apps/enanocms/conf/enanocms?conf"'"'"\n" >> $bitnami/apache2/conf/httpd.conf
 fi
 
 echo "Adding Enano to BitNami's applications.html."
-if test x$(cat $bitnami/apache2/htdocs/applications.html | fgrep 'START BitNami Enano CMS Module enanocms' | wc -l) = x0; then
+if test "`cat $bitnami/apache2/htdocs/applications.html | fgrep 'START BitNami Enano CMS Module enanocms' | wc -l`" -eq 0; then
   cp enanocms-module.png $bitnami/apache2/htdocs/img/
-  line=$(cat $bitnami/apache2/htdocs/applications.html | fgrep -n '<!-- @@BITNAMI_MODULE_PLACEHOLDER@@ -->' | cut -d ':' -f 1)
+  line=`cat $bitnami/apache2/htdocs/applications.html | fgrep -n '<!-- @@BITNAMI_MODULE_PLACEHOLDER@@ -->' | cut -d ':' -f 1`
   head -n $(($line - 1)) $bitnami/apache2/htdocs/applications.html > ./applications-temp.html
   cat application.html >> ./applications-temp.html
   tail -n +$line $bitnami/apache2/htdocs/applications.html >> ./applications-temp.html

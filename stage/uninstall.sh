@@ -32,7 +32,7 @@ startline=`cat $bitnami/apache2/htdocs/applications.html | grep -n "START $marke
 endline=`cat $bitnami/apache2/htdocs/applications.html | grep -n "END $marker" | cut -d: -f1`
 nlines=`cat $bitnami/apache2/htdocs/applications.html | wc -l`
 # sanity check...
-if test $startline -gt 0 -a $endline -gt 0 -a $endline -gt $startline -a $nlines -gt $endline ; then
+if test "$startline" -gt 0 -a "$endline" -gt 0 -a "$endline" -gt "$startline" -a "$nlines" -gt "$endline" ; then
 	cat $bitnami/apache2/htdocs/applications.html | head -n$(($startline - 1)) > $bitnami/apache2/htdocs/applications.html.new
 	cat $bitnami/apache2/htdocs/applications.html | tail -n$(($nlines - $endline)) >> $bitnami/apache2/htdocs/applications.html.new
 	mv $bitnami/apache2/htdocs/applications.html $bitnami/apache2/htdocs/applications.html.bak.enanocms-uninstall || exit 1
@@ -41,6 +41,5 @@ fi
 
 echo "Removing app directory."
 cd $bitnami || exit 1
-cp apps/enanocms/uninstall.sh ./ || exit 1
 rm -rf apps/enanocms/ || exit 1
 
