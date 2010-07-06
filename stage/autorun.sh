@@ -29,12 +29,34 @@ fi
 cd `dirname $0`
 
 echo "Welcome to the Enano CMS BitNami module installer."
+if [ ! -d ./enano-* ]; then
+	HG_BASE=${HG_BASE:-http://hg.enanocms.org/repos}
+	cat <<EOF
+This is the Mercurial-based installer. It doesn't include the Enano source
+tree - instead it's created based on the latest Mercurial sources. To use this
+installer, you must have Mercurial on your system.
+
+The current repository path is ${HG_BASE}.
+To override it, set HG_BASE.
+
+You can safely Control-C out of this installer at any time and temporary files
+will be cleaned up.
+
+EOF
+fi
+
 autobitnami=""
 if test -n "$HOME"; then
-  autobitnami=$(echo $HOME/lampstack-*)
+  autobitnami=`echo $HOME/lampstack-*`
   if test ! -d "$autobitnami"; then
     autobitnami=""
   fi
+fi
+if test -d /Applications/; then
+	autobitnami=`echo /Applications/mampstack-*`
+	if test ! -d "$autobitnami"; then
+		autobitnami=""
+	fi
 fi
 while true; do
   if test -n "$autobitnami"; then
@@ -62,18 +84,38 @@ while true; do
   echo $out
 done
 
+my_tr()
+{
+	# this is needed under OS X, its terminal emulator tends to mess up tr
+	LC_ALL=C tr $@
+	return $?
+}
+
 echo "Creating database."
 
 bitnami_db="bn_enanocms"
 bitnami_user="bn_enanocms"
-bitnami_pass=`dd if=/dev/urandom bs=256 count=1 2>/dev/null | tr -cd '\41-\46\50-\176' | cut -c 1-12`
+bitnami_pass=`dd if=/dev/urandom bs=256 count=1 2>/dev/null | my_tr -cd '\41-\46\50-\176' | cut -c 1-12`
 
 query='CREATE DATABASE IF NOT EXISTS `'$bitnami_db'`; GRANT ALL PRIVILEGES ON '$bitnami_db'.* TO '"$bitnami_user"'@localhost IDENTIFIED BY '"'$bitnami_pass'"'; FLUSH PRIVILEGES;'
 echo "$query" | $mysql -u root --password="$mysqlpass" || exit 1
 
 echo "Installing files."
 mkdir -p $bitnami/apps/enanocms/{conf,licenses} || exit 1
-cp -r ./enano-* $bitnami/apps/enanocms/htdocs || exit 1
+if [ -d ./enano-* ]; then
+	cp -r ./enano-* $bitnami/apps/enanocms/htdocs || exit 1
+else
+	# There's no Enano source tree in this installer. Pull the latest from Mercurial.
+	oldpwd=`pwd`
+	cd $bitnami/apps/enanocms || exit 1
+	curl -q -o mkenanodev.sh http://hg.enanocms.org/mkenanodev.sh || exit 1
+	chmod u+x mkenanodev.sh || exit 1
+	./mkenanodev.sh 1.1 $HG_BASE || exit 1
+	rm -f mkenanodev.sh
+	mv enano-1.1 htdocs || exit 1
+	
+	cd $oldpwd
+fi
 cp ./COPYING $bitnami/apps/enanocms/licenses/ || exit 1
 cat <<EOF > $bitnami/apps/enanocms/conf/enanocms.conf
 Alias /enanocms "$bitnami/apps/enanocms/htdocs"
